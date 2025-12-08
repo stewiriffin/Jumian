@@ -87,7 +87,6 @@ export default function ProductPage() {
       name: product.name,
       price: product.price,
       image: product.image,
-      rating: product.rating,
       inStock: product.inStock,
     });
 

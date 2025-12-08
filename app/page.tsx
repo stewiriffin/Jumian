@@ -3,6 +3,7 @@ import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
 import { TrendingUp, Zap, Shield, Truck } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
+import { safeJsonParse } from '@/lib/json-helpers';
 
 async function getHomePageData() {
   try {
@@ -27,25 +28,37 @@ async function getHomePageData() {
     return {
       categories,
       featuredProducts: featuredProducts.map(p => {
-        const parsedImages = JSON.parse(p.images);
+        const parsedImages = safeJsonParse<string[]>(p.images, []);
+        const parsedSpecs = p.specifications
+          ? safeJsonParse<Record<string, string>>(p.specifications, {})
+          : undefined;
+
         return {
           ...p,
           images: parsedImages,
           image: parsedImages[0] || '',
           category: p.category.name,
           reviews: p.reviewCount,
-          specifications: p.specifications ? JSON.parse(p.specifications) : null,
+          specifications: parsedSpecs,
+          originalPrice: p.originalPrice ?? undefined,
+          discount: p.discount ?? undefined,
         };
       }),
       flashSaleProducts: flashSaleProducts.map(p => {
-        const parsedImages = JSON.parse(p.images);
+        const parsedImages = safeJsonParse<string[]>(p.images, []);
+        const parsedSpecs = p.specifications
+          ? safeJsonParse<Record<string, string>>(p.specifications, {})
+          : undefined;
+
         return {
           ...p,
           images: parsedImages,
           image: parsedImages[0] || '',
           category: p.category.name,
           reviews: p.reviewCount,
-          specifications: p.specifications ? JSON.parse(p.specifications) : null,
+          specifications: parsedSpecs,
+          originalPrice: p.originalPrice ?? undefined,
+          discount: p.discount ?? undefined,
         };
       }),
     };

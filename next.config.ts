@@ -5,7 +5,19 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'plus.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'utfs.io', // UploadThing CDN if you decide to use it
+      },
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos', // Lorem Picsum for placeholder images
       },
     ],
   },

@@ -1,24 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { registerSchema } from '@/lib/validations';
+import { rateLimiters, getClientIdentifier, createRateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password } = await request.json();
+    // Apply rate limiting
+    const identifier = getClientIdentifier(request);
+    const rateLimitResult = rateLimiters.auth(identifier);
 
-    if (!name || !email || !password) {
+    if (!rateLimitResult.success) {
+      return createRateLimitResponse(rateLimitResult.resetTime);
+    }
+
+    const body = await request.json();
+
+    // Validate input with Zod
+    const validationResult = registerSchema.safeParse(body);
+
+    if (!validationResult.success) {
+      const errors = validationResult.error.issues.map(err => ({
+        field: err.path.join('.'),
+        message: err.message,
+      }));
+
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Validation failed', details: errors },
         { status: 400 }
       );
     }
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: 'Password must be at least 6 characters' },
-        { status: 400 }
-      );
-    }
+    const { name, email, password } = validationResult.data;
 
     const existingUser = await prisma.user.findUnique({
       where: { email },

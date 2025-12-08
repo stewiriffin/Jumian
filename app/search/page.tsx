@@ -20,6 +20,8 @@ interface Product {
   reviews: number;
   inStock: boolean;
   seller: string;
+  description: string;
+  specifications?: { [key: string]: string };
 }
 
 export default function SearchPage() {

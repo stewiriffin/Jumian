@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import CategoryClient from './CategoryClient';
+import { safeJsonParse } from '@/lib/json-helpers';
 
 async function getCategoryData(slug: string) {
   try {
@@ -20,14 +21,25 @@ async function getCategoryData(slug: string) {
     return {
       category,
       products: products.map(p => {
-        const parsedImages = JSON.parse(p.images);
+        const parsedImages = safeJsonParse<string[]>(p.images, []);
+        const parsedSpecs = p.specifications
+          ? safeJsonParse<Record<string, string>>(p.specifications, {})
+          : null;
+
         return {
           ...p,
           images: parsedImages,
           image: parsedImages[0] || '',
-          category: p.category.name,
+          category: {
+            id: p.category.id,
+            name: p.category.name,
+          },
+          description: p.description,
           reviews: p.reviewCount,
-          specifications: p.specifications ? JSON.parse(p.specifications) : null,
+          reviewCount: p.reviewCount,
+          specifications: parsedSpecs ?? undefined,
+          originalPrice: p.originalPrice ?? undefined,
+          discount: p.discount ?? undefined,
         };
       }),
     };

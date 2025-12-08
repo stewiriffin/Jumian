@@ -3,19 +3,11 @@
 import { useState } from 'react';
 import ProductCard from '@/components/ProductCard';
 import { SlidersHorizontal, Grid3x3, List } from 'lucide-react';
+import { Product } from '@/lib/types';
 
-interface Product {
-  id: string;
-  name: string;
+interface CategoryProduct extends Omit<Product, 'category'> {
   slug: string;
-  price: number;
-  originalPrice: number | null;
-  discount: number | null;
-  images: string[];
-  rating: number;
   reviewCount: number;
-  inStock: boolean;
-  seller: string;
   category: {
     id: string;
     name: string;
@@ -32,11 +24,11 @@ interface Category {
 
 interface Props {
   category: Category;
-  initialProducts: Product[];
+  initialProducts: CategoryProduct[];
 }
 
 export default function CategoryClient({ category, initialProducts }: Props) {
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState<CategoryProduct[]>(initialProducts);
   const [sortBy, setSortBy] = useState('featured');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 300000]);
   const [showFilters, setShowFilters] = useState(false);
@@ -191,7 +183,11 @@ export default function CategoryClient({ category, initialProducts }: Props) {
                 : 'space-y-4'
             }>
               {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={{
+                  ...product,
+                  category: product.category.name,
+                  reviews: product.reviewCount,
+                }} />
               ))}
             </div>
           ) : (

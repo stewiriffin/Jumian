@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { safeJsonParse } from '@/lib/json-helpers';
+
+type SortByField = 'createdAt' | 'price' | 'name' | 'rating';
+const VALID_SORT_FIELDS: SortByField[] = ['createdAt', 'price', 'name', 'rating'];
+const VALID_ORDER_VALUES = ['asc', 'desc'] as const;
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,10 +16,27 @@ export async function GET(request: NextRequest) {
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
     const inStock = searchParams.get('inStock');
-    const sortBy = searchParams.get('sortBy') || 'createdAt';
-    const order = searchParams.get('order') || 'desc';
+    const sortByParam = searchParams.get('sortBy') || 'createdAt';
+    const orderParam = searchParams.get('order') || 'desc';
 
-    const where: any = {};
+    // Validate sortBy parameter
+    const sortBy: SortByField = VALID_SORT_FIELDS.includes(sortByParam as SortByField)
+      ? (sortByParam as SortByField)
+      : 'createdAt';
+
+    // Validate order parameter
+    const order = (orderParam === 'asc' || orderParam === 'desc') ? orderParam : 'desc';
+
+    interface ProductWhere {
+      categoryId?: string;
+      OR?: Array<{ name?: { contains: string; mode: 'insensitive' }; description?: { contains: string; mode: 'insensitive' } }>;
+      featured?: boolean;
+      flashSale?: boolean;
+      price?: { gte?: number; lte?: number };
+      inStock?: boolean;
+    }
+
+    const where: ProductWhere = {};
 
     if (category) {
       const cat = await prisma.category.findUnique({
@@ -42,8 +64,14 @@ export async function GET(request: NextRequest) {
 
     if (minPrice || maxPrice) {
       where.price = {};
-      if (minPrice) where.price.gte = parseFloat(minPrice);
-      if (maxPrice) where.price.lte = parseFloat(maxPrice);
+      if (minPrice) {
+        const min = parseFloat(minPrice);
+        if (!isNaN(min) && min >= 0) where.price.gte = min;
+      }
+      if (maxPrice) {
+        const max = parseFloat(maxPrice);
+        if (!isNaN(max) && max >= 0) where.price.lte = max;
+      }
     }
 
     if (inStock === 'true') {
@@ -60,18 +88,20 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Parse JSON fields
+    // Parse JSON fields safely
     const parsedProducts = products.map((product) => {
-      const parsedImages = JSON.parse(product.images);
+      const parsedImages = safeJsonParse<string[]>(product.images, []);
+      const parsedSpecs = product.specifications
+        ? safeJsonParse<Record<string, string>>(product.specifications, {})
+        : null;
+
       return {
         ...product,
         images: parsedImages,
         image: parsedImages[0] || '',
         category: product.category.name,
         reviews: product.reviewCount,
-        specifications: product.specifications
-          ? JSON.parse(product.specifications)
-          : null,
+        specifications: parsedSpecs,
       };
     });
 
