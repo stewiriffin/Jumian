@@ -4,69 +4,108 @@ import ProductCard from '@/components/ProductCard';
 import { TrendingUp, Zap, Shield, Truck } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { safeJsonParse } from '@/lib/json-helpers';
+import { getCached, CACHE_KEYS, CACHE_TTL } from '@/lib/cache';
 
 async function getHomePageData() {
-  try {
-    const [categories, featuredProducts, flashSaleProducts] = await Promise.all([
-      prisma.category.findMany({
-        orderBy: { name: 'asc' },
-      }),
-      prisma.product.findMany({
-        where: { featured: true, inStock: true },
-        include: { category: true },
-        take: 8,
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.product.findMany({
-        where: { flashSale: true, inStock: true },
-        include: { category: true },
-        take: 6,
-        orderBy: { discount: 'desc' },
-      }),
-    ]);
-
-    return {
-      categories,
-      featuredProducts: featuredProducts.map(p => {
-        const parsedImages = safeJsonParse<string[]>(p.images, []);
-        const parsedSpecs = p.specifications
-          ? safeJsonParse<Record<string, string>>(p.specifications, {})
-          : undefined;
+  return getCached(
+    'homepage:data',
+    async () => {
+      try {
+        const [categories, featuredProducts, flashSaleProducts] = await Promise.all([
+          prisma.category.findMany({
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              icon: true,
+            },
+            orderBy: { name: 'asc' },
+          }),
+          prisma.product.findMany({
+            where: { featured: true, inStock: true },
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              price: true,
+              originalPrice: true,
+              discount: true,
+              images: true,
+              rating: true,
+              reviewCount: true,
+              inStock: true,
+              stock: true,
+              seller: true,
+              createdAt: true,
+              category: {
+                select: { name: true }
+              },
+            },
+            take: 8,
+            orderBy: { createdAt: 'desc' },
+          }),
+          prisma.product.findMany({
+            where: { flashSale: true, inStock: true },
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              price: true,
+              originalPrice: true,
+              discount: true,
+              images: true,
+              rating: true,
+              reviewCount: true,
+              inStock: true,
+              stock: true,
+              seller: true,
+              category: {
+                select: { name: true }
+              },
+            },
+            take: 6,
+            orderBy: { discount: 'desc' },
+          }),
+        ]);
 
         return {
-          ...p,
-          images: parsedImages,
-          image: parsedImages[0] || '',
-          category: p.category.name,
-          reviews: p.reviewCount,
-          specifications: parsedSpecs,
-          originalPrice: p.originalPrice ?? undefined,
-          discount: p.discount ?? undefined,
+          categories,
+          featuredProducts: featuredProducts.map(p => {
+            const parsedImages = safeJsonParse<string[]>(p.images, []);
+            return {
+              ...p,
+              images: parsedImages,
+              image: parsedImages[0] || '',
+              category: p.category.name,
+              reviews: p.reviewCount,
+              originalPrice: p.originalPrice ?? undefined,
+              discount: p.discount ?? undefined,
+            };
+          }),
+          flashSaleProducts: flashSaleProducts.map(p => {
+            const parsedImages = safeJsonParse<string[]>(p.images, []);
+            return {
+              ...p,
+              images: parsedImages,
+              image: parsedImages[0] || '',
+              category: p.category.name,
+              reviews: p.reviewCount,
+              originalPrice: p.originalPrice ?? undefined,
+              discount: p.discount ?? undefined,
+            };
+          }),
         };
-      }),
-      flashSaleProducts: flashSaleProducts.map(p => {
-        const parsedImages = safeJsonParse<string[]>(p.images, []);
-        const parsedSpecs = p.specifications
-          ? safeJsonParse<Record<string, string>>(p.specifications, {})
-          : undefined;
-
-        return {
-          ...p,
-          images: parsedImages,
-          image: parsedImages[0] || '',
-          category: p.category.name,
-          reviews: p.reviewCount,
-          specifications: parsedSpecs,
-          originalPrice: p.originalPrice ?? undefined,
-          discount: p.discount ?? undefined,
-        };
-      }),
-    };
-  } catch (error) {
-    console.error('Error fetching homepage data:', error);
-    return { categories: [], featuredProducts: [], flashSaleProducts: [] };
-  }
+      } catch (error) {
+        console.error('Error fetching homepage data:', error);
+        return { categories: [], featuredProducts: [], flashSaleProducts: [] };
+      }
+    },
+    CACHE_TTL.MEDIUM // 5 minutes cache
+  );
 }
+
+// Revalidate every 5 minutes
+export const revalidate = 300;
 
 export default async function Home() {
   const { categories, featuredProducts, flashSaleProducts } = await getHomePageData();
@@ -93,7 +132,7 @@ export default async function Home() {
             </div>
             <div className="absolute bottom-0 right-0 w-1/2 h-full opacity-20">
               <Image
-                src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=600"
+                src="https://placehold.co/800x800/FF6B00/white?text=IAN&font=raleway"
                 alt="Shopping"
                 fill
                 className="object-contain"

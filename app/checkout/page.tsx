@@ -69,27 +69,49 @@ export default function CheckoutPage() {
           total,
           paymentMethod,
           shippingAddress: {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
+            fullName: `${formData.firstName} ${formData.lastName}`,
             phone: formData.phone,
-            county: formData.county,
-            town: formData.town,
             address: formData.address,
+            city: formData.town,
+            state: formData.county,
+            zipCode: '00100',
           },
           billingAddress: {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
+            fullName: `${formData.firstName} ${formData.lastName}`,
             phone: formData.phone,
-            county: formData.county,
-            town: formData.town,
             address: formData.address,
+            city: formData.town,
+            state: formData.county,
+            zipCode: '00100',
           },
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to create order');
+      console.log('Order API response status:', response.status);
+
+      if (!response.ok) {
+        let errorData;
+        const responseText = await response.text();
+        console.error('Order creation failed with status:', response.status);
+        console.error('Response body:', responseText);
+
+        try {
+          errorData = JSON.parse(responseText);
+        } catch (e) {
+          console.error('Could not parse error response as JSON');
+          throw new Error(`Server error (${response.status}): ${responseText.substring(0, 100)}`);
+        }
+
+        console.error('Parsed error data:', errorData);
+        if (errorData.details) {
+          const errorMessages = errorData.details.map((err: any) => `${err.field}: ${err.message}`).join(', ');
+          throw new Error(`Validation failed: ${errorMessages}`);
+        }
+        throw new Error(errorData.error || 'Failed to create order');
+      }
 
       const order = await response.json();
+      console.log('Order created successfully:', order.id);
 
       // Simulate M-Pesa payment
       if (paymentMethod === 'mpesa') {

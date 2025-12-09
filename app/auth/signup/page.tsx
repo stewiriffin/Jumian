@@ -23,8 +23,23 @@ export default function SignUpPage() {
       return;
     }
 
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (formData.password.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+
+    if (!/[A-Z]/.test(formData.password)) {
+      toast.error('Password must contain at least one uppercase letter');
+      return;
+    }
+
+    if (!/[a-z]/.test(formData.password)) {
+      toast.error('Password must contain at least one lowercase letter');
+      return;
+    }
+
+    if (!/[0-9]/.test(formData.password)) {
+      toast.error('Password must contain at least one number');
       return;
     }
 
@@ -44,7 +59,12 @@ export default function SignUpPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        toast.error(data.error || 'Registration failed');
+        if (data.details) {
+          const errorMessages = data.details.map((err: any) => err.message).join(', ');
+          toast.error(errorMessages);
+        } else {
+          toast.error(data.error || 'Registration failed');
+        }
         return;
       }
 
@@ -111,8 +131,11 @@ export default function SignUpPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-jumia-orange"
               required
               disabled={isLoading}
-              minLength={6}
+              minLength={8}
             />
+            <p className="text-xs text-gray-600 mt-1">
+              Must be at least 8 characters with uppercase, lowercase, and number
+            </p>
           </div>
 
           <div>
@@ -129,7 +152,7 @@ export default function SignUpPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-jumia-orange"
               required
               disabled={isLoading}
-              minLength={6}
+              minLength={8}
             />
           </div>
 

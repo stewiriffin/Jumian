@@ -28,7 +28,7 @@ export const addressSchema = z.object({
 
 // Order validation schemas
 export const orderItemSchema = z.object({
-  productId: z.string().uuid('Invalid product ID'),
+  productId: z.string().min(1, 'Product ID required'),
   quantity: z.number().int().positive('Quantity must be positive').max(100, 'Quantity too large'),
   price: z.number().positive('Price must be positive'),
   name: z.string().min(1, 'Product name required'),
@@ -48,12 +48,12 @@ export const createOrderSchema = z.object({
 
 // Review validation schema
 export const createReviewSchema = z.object({
-  productId: z.string().uuid('Invalid product ID'),
+  productId: z.string().min(1, 'Product ID required'),
   rating: z.number().int().min(1, 'Rating must be at least 1').max(5, 'Rating cannot exceed 5'),
   comment: z.string().min(10, 'Review must be at least 10 characters').max(500, 'Review too long'),
 });
 
 // Wishlist validation schema
 export const wishlistItemSchema = z.object({
-  productId: z.string().uuid('Invalid product ID'),
+  productId: z.string().min(1, 'Product ID required'),
 });

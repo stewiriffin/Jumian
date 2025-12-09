@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { safeJsonParse } from '@/lib/json-helpers';
+import { getCached, CACHE_KEYS, CACHE_TTL } from '@/lib/cache';
 
 export async function GET(
   request: NextRequest,
@@ -7,52 +9,79 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-
-    const product = await prisma.product.findUnique({
-      where: { id },
-      include: {
-        category: true,
-        reviews: {
-          include: {
-            user: {
-              select: {
-                name: true,
-                image: true,
-              },
+    const productData = await getCached(
+      CACHE_KEYS.PRODUCT(id),
+      async () => {
+        const product = await prisma.product.findUnique({
+          where: { id },
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            price: true,
+            originalPrice: true,
+            discount: true,
+            images: true,
+            rating: true,
+            reviewCount: true,
+            inStock: true,
+            stock: true,
+            seller: true,
+            specifications: true,
+            category: {
+              select: { name: true }
             },
           },
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
-      },
-    });
+        });
 
-    if (!product) {
+        if (!product) {
+          return null;
+        }
+
+        // Parse JSON fields
+        const parsedImages = safeJsonParse<string[]>(product.images, []);
+        const parsedSpecs = product.specifications
+          ? safeJsonParse<Record<string, string>>(product.specifications, {})
+          : undefined;
+
+        // Transform product data to match the expected format
+        return {
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          originalPrice: product.originalPrice ?? undefined,
+          discount: product.discount ?? undefined,
+          images: parsedImages,
+          image: parsedImages[0] || '',
+          category: product.category.name,
+          rating: product.rating,
+          reviewCount: product.reviewCount,
+          inStock: product.inStock,
+          stock: product.stock,
+          seller: product.seller,
+          specifications: parsedSpecs,
+        };
+      },
+      CACHE_TTL.MEDIUM // 5 minutes cache
+    );
+
+    if (!productData) {
       return NextResponse.json(
         { error: 'Product not found' },
         { status: 404 }
       );
     }
 
-    // Parse JSON fields
-    const parsedImages = JSON.parse(product.images);
-    const parsedProduct = {
-      ...product,
-      images: parsedImages,
-      image: parsedImages[0] || '',
-      category: product.category.name,
-      reviews: product.reviewCount,
-      specifications: product.specifications
-        ? JSON.parse(product.specifications)
-        : null,
-    };
-
-    return NextResponse.json(parsedProduct);
+    return NextResponse.json(productData, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+      },
+    });
   } catch (error) {
     console.error('Error fetching product:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch product' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

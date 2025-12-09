@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
-  const response = NextResponse.next();
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  const response = NextResponse.next()
 
   // Security Headers
   const securityHeaders = {
@@ -26,8 +27,8 @@ export function middleware(request: NextRequest) {
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requires unsafe-eval and unsafe-inline
       "style-src 'self' 'unsafe-inline'", // Tailwind requires unsafe-inline
-      "img-src 'self' data: https://images.unsplash.com https://plus.unsplash.com https://utfs.io",
-      "font-src 'self'",
+      "img-src 'self' data: https://images.unsplash.com https://plus.unsplash.com https://utfs.io https://picsum.photos",
+      "font-src 'self' data:",
       "connect-src 'self'",
       "frame-ancestors 'none'",
     ].join('; '),
@@ -46,7 +47,47 @@ export function middleware(request: NextRequest) {
     );
   }
 
-  return response;
+  // Protected admin routes - check for admin role
+  if (pathname.startsWith('/admin')) {
+    const { getToken } = await import('next-auth/jwt')
+    const token = await getToken({
+      req: request as any,
+      secret: process.env.NEXTAUTH_SECRET,
+    })
+
+    if (!token) {
+      const url = new URL('/auth/signin', request.url)
+      url.searchParams.set('callbackUrl', pathname)
+      return NextResponse.redirect(url)
+    }
+
+    if (token.role !== 'admin') {
+      const url = new URL('/', request.url)
+      url.searchParams.set('error', 'unauthorized')
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // Protected user routes
+  if (pathname.startsWith('/profile') || pathname.startsWith('/orders') || pathname.startsWith('/wishlist')) {
+    const { getToken } = await import('next-auth/jwt')
+    const token = await getToken({
+      req: request as any,
+      secret: process.env.NEXTAUTH_SECRET,
+    })
+
+    if (!token) {
+      const url = new URL('/auth/signin', request.url)
+      url.searchParams.set('callbackUrl', pathname)
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // Rate limiting info
+  const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown'
+  response.headers.set('X-RateLimit-IP', ip)
+
+  return response
 }
 
 // Configure which paths the middleware should run on

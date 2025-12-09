@@ -1,87 +1,77 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
-/**
- * Environment variable schema
- * Validates and types environment variables at runtime
- */
+// Environment variable schema
 const envSchema = z.object({
+  // Node Environment
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+
   // Database
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
 
   // Authentication
-  NEXTAUTH_URL: z.string().url('NEXTAUTH_URL must be a valid URL').optional(),
   NEXTAUTH_SECRET: z.string().min(32, 'NEXTAUTH_SECRET must be at least 32 characters'),
+  NEXTAUTH_URL: z.string().url('NEXTAUTH_URL must be a valid URL'),
 
-  // Node Environment
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  // Redis (optional in development, required in production)
+  REDIS_URL: z.string().optional(),
 
-  // Optional: Payment providers
-  STRIPE_SECRET_KEY: z.string().optional(),
-  STRIPE_PUBLISHABLE_KEY: z.string().optional(),
-  MPESA_CONSUMER_KEY: z.string().optional(),
-  MPESA_CONSUMER_SECRET: z.string().optional(),
-
-  // Optional: File upload
-  UPLOADTHING_SECRET: z.string().optional(),
-  UPLOADTHING_APP_ID: z.string().optional(),
-
-  // Optional: Email
+  // Email (optional)
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.string().optional(),
   SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
-});
+  SMTP_PASSWORD: z.string().optional(),
+  SMTP_FROM: z.string().optional(),
 
-/**
- * Validate environment variables
- * Throws error if validation fails
- */
+  // M-Pesa (optional)
+  MPESA_CONSUMER_KEY: z.string().optional(),
+  MPESA_CONSUMER_SECRET: z.string().optional(),
+  MPESA_SHORTCODE: z.string().optional(),
+  MPESA_PASSKEY: z.string().optional(),
+  MPESA_ENVIRONMENT: z.enum(['sandbox', 'production']).optional(),
+
+  // Stripe (optional)
+  STRIPE_SECRET_KEY: z.string().optional(),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+
+  // Sentry (optional)
+  SENTRY_DSN: z.string().optional(),
+  NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
+
+  // UploadThing (optional)
+  UPLOADTHING_SECRET: z.string().optional(),
+  UPLOADTHING_APP_ID: z.string().optional(),
+})
+
+// Parse and validate environment variables
 function validateEnv() {
-  try {
-    const env = envSchema.parse(process.env);
-    return env;
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const missingVars = error.issues.map(err => {
-        const path = err.path.join('.');
-        return `  ❌ ${path}: ${err.message}`;
-      }).join('\n');
+  const parsed = envSchema.safeParse(process.env)
 
-      console.error('❌ Invalid environment variables:\n' + missingVars);
-      throw new Error('Invalid environment variables. Check your .env file.');
-    }
-    throw error;
+  if (!parsed.success) {
+    console.error('❌ Invalid environment variables:')
+    console.error(JSON.stringify(parsed.error.format(), null, 2))
+    throw new Error('Invalid environment variables')
   }
+
+  // Production-specific validations
+  if (parsed.data.NODE_ENV === 'production') {
+    if (!parsed.data.REDIS_URL) {
+      console.warn('⚠️  REDIS_URL is not set. Redis is recommended for production.')
+    }
+    if (!parsed.data.SENTRY_DSN) {
+      console.warn('⚠️  SENTRY_DSN is not set. Error tracking is recommended for production.')
+    }
+    if (!parsed.data.DATABASE_URL.startsWith('postgresql')) {
+      console.warn('⚠️  PostgreSQL is recommended for production databases.')
+    }
+  }
+
+  return parsed.data
 }
 
-/**
- * Type-safe environment variables
- * Validates on first access
- */
-export const env = validateEnv();
+// Export validated environment variables
+export const env = validateEnv()
 
-/**
- * Check if required payment providers are configured
- */
-export const isStripeConfigured = Boolean(
-  env.STRIPE_SECRET_KEY && env.STRIPE_PUBLISHABLE_KEY
-);
-
-export const isMpesaConfigured = Boolean(
-  env.MPESA_CONSUMER_KEY && env.MPESA_CONSUMER_SECRET
-);
-
-export const isEmailConfigured = Boolean(
-  env.SMTP_HOST && env.SMTP_PORT && env.SMTP_USER && env.SMTP_PASS
-);
-
-export const isUploadThingConfigured = Boolean(
-  env.UPLOADTHING_SECRET && env.UPLOADTHING_APP_ID
-);
-
-/**
- * Development mode flag
- */
-export const isDevelopment = env.NODE_ENV === 'development';
-export const isProduction = env.NODE_ENV === 'production';
-export const isTest = env.NODE_ENV === 'test';
+// Helper to check if we're in production
+export const isProduction = env.NODE_ENV === 'production'
+export const isDevelopment = env.NODE_ENV === 'development'
+export const isTest = env.NODE_ENV === 'test'
