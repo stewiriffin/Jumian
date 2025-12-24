@@ -50,7 +50,6 @@ export default function ProductPage() {
         const data = await response.json();
         setProduct(data);
       } catch (error) {
-        console.error('Error fetching product:', error);
         toast.error('Product not found');
         router.push('/');
       } finally {

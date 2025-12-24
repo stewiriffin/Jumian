@@ -122,11 +122,6 @@ export function serverErrorResponse(
   message: string = 'Internal server error',
   error?: unknown
 ): NextResponse<ApiResponse> {
-  // Log error in development
-  if (process.env.NODE_ENV === 'development' && error) {
-    console.error('Server error:', error);
-  }
-
   return NextResponse.json(
     {
       success: false,

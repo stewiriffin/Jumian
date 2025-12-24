@@ -68,7 +68,6 @@ export default function SearchPage() {
       setProducts(data);
     } catch (error) {
       toast.error('Failed to search products');
-      console.error(error);
     } finally {
       setLoading(false);
     }

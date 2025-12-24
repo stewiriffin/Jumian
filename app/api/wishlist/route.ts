@@ -34,7 +34,6 @@ export async function GET() {
 
     return NextResponse.json(items);
   } catch (error) {
-    console.error('Error fetching wishlist:', error);
     return NextResponse.json(
       { error: 'Failed to fetch wishlist' },
       { status: 500 }
@@ -67,7 +66,6 @@ export async function POST(request: NextRequest) {
         { status: 409 }
       );
     }
-    console.error('Error adding to wishlist:', error);
     return NextResponse.json(
       { error: 'Failed to add to wishlist' },
       { status: 500 }
@@ -104,7 +102,6 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error removing from wishlist:', error);
     return NextResponse.json(
       { error: 'Failed to remove from wishlist' },
       { status: 500 }

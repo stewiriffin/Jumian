@@ -19,12 +19,10 @@ export async function GET(request: NextRequest) {
     const sortByParam = searchParams.get('sortBy') || 'createdAt';
     const orderParam = searchParams.get('order') || 'desc';
 
-    // Validate sortBy parameter
     const sortBy: SortByField = VALID_SORT_FIELDS.includes(sortByParam as SortByField)
       ? (sortByParam as SortByField)
       : 'createdAt';
 
-    // Validate order parameter
     const order = (orderParam === 'asc' || orderParam === 'desc') ? orderParam : 'desc';
 
     interface ProductWhere {
@@ -88,7 +86,6 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Parse JSON fields safely
     const parsedProducts = products.map((product) => {
       const parsedImages = safeJsonParse<string[]>(product.images, []);
       const parsedSpecs = product.specifications
@@ -107,7 +104,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(parsedProducts);
   } catch (error) {
-    console.error('Error fetching products:', error);
     return NextResponse.json(
       { error: 'Failed to fetch products' },
       { status: 500 }

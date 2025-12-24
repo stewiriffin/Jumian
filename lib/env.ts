@@ -47,22 +47,7 @@ function validateEnv() {
   const parsed = envSchema.safeParse(process.env)
 
   if (!parsed.success) {
-    console.error('❌ Invalid environment variables:')
-    console.error(JSON.stringify(parsed.error.format(), null, 2))
     throw new Error('Invalid environment variables')
-  }
-
-  // Production-specific validations
-  if (parsed.data.NODE_ENV === 'production') {
-    if (!parsed.data.REDIS_URL) {
-      console.warn('⚠️  REDIS_URL is not set. Redis is recommended for production.')
-    }
-    if (!parsed.data.SENTRY_DSN) {
-      console.warn('⚠️  SENTRY_DSN is not set. Error tracking is recommended for production.')
-    }
-    if (!parsed.data.DATABASE_URL.startsWith('postgresql')) {
-      console.warn('⚠️  PostgreSQL is recommended for production databases.')
-    }
   }
 
   return parsed.data

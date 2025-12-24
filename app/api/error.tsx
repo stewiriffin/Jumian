@@ -10,7 +10,6 @@ export default function APIError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('API error:', error);
   }, [error]);
 
   return (

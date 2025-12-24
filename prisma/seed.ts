@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting enhanced seed...');
+  console.log('Starting enhanced seed...');
 
   // Clear existing data
   await prisma.review.deleteMany();
@@ -28,7 +28,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Admin user created:', admin.email, '| Password: Admin@123');
+  console.log('Admin user created:', admin.email, '| Password: Admin@123');
 
   // Create test users
   const testUsers = [];
@@ -45,7 +45,7 @@ async function main() {
     testUsers.push(user);
   }
 
-  console.log(`✅ Created ${testUsers.length} test users`);
+  console.log(`Created ${testUsers.length} test users`);
 
   // Enhanced categories with IAN placeholder
   const IAN_IMAGE = 'https://placehold.co/800x800/FF6B00/white?text=IAN&font=raleway';
@@ -127,7 +127,7 @@ async function main() {
     await prisma.category.create({ data: category });
   }
 
-  console.log('✅ Categories created');
+  console.log('Categories created');
 
   // Get category IDs
   const electronicsCategory = await prisma.category.findUnique({ where: { slug: 'electronics' } });
@@ -1309,7 +1309,7 @@ async function main() {
     }
   }
 
-  console.log(`✅ ${products.length} products created`);
+  console.log(`${products.length} products created`);
 
   // Create promo codes
   const promoCodes = [
@@ -1349,7 +1349,7 @@ async function main() {
     await prisma.promoCode.create({ data: promo });
   }
 
-  console.log('✅ Promo codes created');
+  console.log('Promo codes created');
 
   // Create sample reviews
   const sampleProducts = await prisma.product.findMany({ take: 20 });
@@ -1381,13 +1381,13 @@ async function main() {
     }
   }
 
-  console.log(`✅ ${reviewCount} reviews created`);
+  console.log(`${reviewCount} reviews created`);
 
-  console.log('\n🎉 Enhanced seed completed successfully!');
-  console.log('\n📧 Admin Login:');
+  console.log('\nEnhanced seed completed successfully!');
+  console.log('\nAdmin Login:');
   console.log('   Email: admin@jumian.com');
   console.log('   Password: Admin@123');
-  console.log('\n📊 Statistics:');
+  console.log('\nStatistics:');
   console.log(`   Categories: ${categories.length}`);
   console.log(`   Products: ${products.length}`);
   console.log(`   Promo Codes: ${promoCodes.length}`);
@@ -1397,7 +1397,7 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error('❌ Error during seed:', e);
+    console.error('Error during seed:', e);
     process.exit(1);
   })
   .finally(async () => {

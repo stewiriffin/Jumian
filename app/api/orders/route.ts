@@ -64,7 +64,6 @@ export async function GET() {
 
     return NextResponse.json(parsedOrders);
   } catch (error) {
-    console.error('Error fetching orders:', error);
     return NextResponse.json(
       { error: 'Failed to fetch orders' },
       { status: 500 }
@@ -169,7 +168,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(order);
   } catch (error) {
-    console.error('Error creating order:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to create order';
     return NextResponse.json(
       { error: errorMessage },

@@ -60,7 +60,6 @@ export async function POST(request: NextRequest) {
       email: user.email,
     });
   } catch (error) {
-    console.error('Error registering user:', error);
     return NextResponse.json(
       { error: 'Failed to register user' },
       { status: 500 }

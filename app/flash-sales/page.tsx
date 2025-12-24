@@ -33,7 +33,6 @@ async function getFlashSaleProducts() {
       };
     });
   } catch (error) {
-    console.error('Error fetching flash sale products:', error);
     return [];
   }
 }

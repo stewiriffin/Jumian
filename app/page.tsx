@@ -96,7 +96,6 @@ async function getHomePageData() {
           }),
         };
       } catch (error) {
-        console.error('Error fetching homepage data:', error);
         return { categories: [], featuredProducts: [], flashSaleProducts: [] };
       }
     },

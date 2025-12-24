@@ -10,7 +10,6 @@ export function safeJsonParse<T>(jsonString: string | null, fallback: T): T {
   try {
     return JSON.parse(jsonString) as T;
   } catch (error) {
-    console.error('Failed to parse JSON:', error);
     return fallback;
   }
 }
@@ -25,7 +24,6 @@ export function safeJsonStringify(value: unknown, fallback: string = '{}'): stri
   try {
     return JSON.stringify(value);
   } catch (error) {
-    console.error('Failed to stringify JSON:', error);
     return fallback;
   }
 }

@@ -87,22 +87,15 @@ export default function CheckoutPage() {
         }),
       });
 
-      console.log('Order API response status:', response.status);
-
       if (!response.ok) {
         let errorData;
         const responseText = await response.text();
-        console.error('Order creation failed with status:', response.status);
-        console.error('Response body:', responseText);
 
         try {
           errorData = JSON.parse(responseText);
         } catch (e) {
-          console.error('Could not parse error response as JSON');
           throw new Error(`Server error (${response.status}): ${responseText.substring(0, 100)}`);
         }
-
-        console.error('Parsed error data:', errorData);
         if (errorData.details) {
           const errorMessages = errorData.details.map((err: any) => `${err.field}: ${err.message}`).join(', ');
           throw new Error(`Validation failed: ${errorMessages}`);
@@ -111,7 +104,6 @@ export default function CheckoutPage() {
       }
 
       const order = await response.json();
-      console.log('Order created successfully:', order.id);
 
       // Simulate M-Pesa payment
       if (paymentMethod === 'mpesa') {
@@ -129,7 +121,6 @@ export default function CheckoutPage() {
         window.location.href = '/orders';
       }, 2000);
     } catch (error) {
-      console.error('Checkout error:', error);
       toast.error('Failed to place order. Please try again.');
     } finally {
       setIsProcessing(false);

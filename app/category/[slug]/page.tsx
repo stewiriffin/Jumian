@@ -44,7 +44,6 @@ async function getCategoryData(slug: string) {
       }),
     };
   } catch (error) {
-    console.error('Error fetching category data:', error);
     return null;
   }
 }

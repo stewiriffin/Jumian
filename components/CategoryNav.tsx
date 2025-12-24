@@ -7,7 +7,6 @@ async function getCategories() {
       orderBy: { name: 'asc' },
     });
   } catch (error) {
-    console.error('Error fetching categories:', error);
     return [];
   }
 }

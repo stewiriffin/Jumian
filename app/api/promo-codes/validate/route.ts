@@ -4,7 +4,6 @@ import { rateLimiters, getClientIdentifier, createRateLimitResponse } from '@/li
 
 export async function POST(request: NextRequest) {
   try {
-    // Apply rate limiting
     const identifier = getClientIdentifier(request);
     const rateLimitResult = rateLimiters.api(identifier);
 
@@ -28,7 +27,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find promo code (case-insensitive by converting to uppercase)
     const promoCode = await prisma.promoCode.findFirst({
       where: {
         code: code.toUpperCase(),
@@ -42,7 +40,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if active
     if (!promoCode.active) {
       return NextResponse.json(
         { error: 'This promo code is no longer active' },
@@ -50,7 +47,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check start date
     if (promoCode.startsAt && new Date() < promoCode.startsAt) {
       return NextResponse.json(
         { error: 'This promo code is not yet valid' },
@@ -58,7 +54,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check expiry date
     if (promoCode.expiresAt && new Date() > promoCode.expiresAt) {
       return NextResponse.json(
         { error: 'This promo code has expired' },
@@ -66,7 +61,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check usage limit
     if (promoCode.usageLimit && promoCode.usageCount >= promoCode.usageLimit) {
       return NextResponse.json(
         { error: 'This promo code has reached its usage limit' },
@@ -74,7 +68,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check minimum purchase
     if (promoCode.minPurchase && subtotal < promoCode.minPurchase) {
       return NextResponse.json(
         {
@@ -84,17 +77,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate discount
     let discount = 0;
     if (promoCode.type === 'percentage') {
       discount = (subtotal * promoCode.value) / 100;
-      // Apply max discount if set
       if (promoCode.maxDiscount && discount > promoCode.maxDiscount) {
         discount = promoCode.maxDiscount;
       }
     } else if (promoCode.type === 'fixed') {
       discount = promoCode.value;
-      // Discount cannot exceed subtotal
       if (discount > subtotal) {
         discount = subtotal;
       }
@@ -109,7 +99,6 @@ export async function POST(request: NextRequest) {
       discount: parseFloat(discount.toFixed(2)),
     });
   } catch (error) {
-    console.error('Error validating promo code:', error);
     return NextResponse.json(
       { error: 'Failed to validate promo code' },
       { status: 500 }

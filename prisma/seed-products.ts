@@ -600,8 +600,8 @@ function getRandomReviewCount(): number {
 }
 
 async function main() {
-  console.log('🌱 Starting expanded product seed...');
-  console.log('📦 This will add 200+ products with category-specific images\n');
+  console.log('Starting expanded product seed...');
+  console.log('This will add 200+ products with category-specific images\n');
 
   // Get all categories
   const categories = await prisma.category.findMany();
@@ -610,7 +610,7 @@ async function main() {
   const electronicsId = categoryMap.get('Electronics')!;
 
   // Seed phones
-  console.log('📱 Seeding phones (' + phoneProducts.length + ' products)...');
+  console.log('Seeding phones (' + phoneProducts.length + ' products)...');
   for (let i = 0; i < phoneProducts.length; i++) {
     const product = phoneProducts[i];
     const originalPrice = product.price / (1 - product.discount / 100);
@@ -638,7 +638,7 @@ async function main() {
   }
 
   // Seed laptops
-  console.log('💻 Seeding laptops (' + laptopProducts.length + ' products)...');
+  console.log('Seeding laptops (' + laptopProducts.length + ' products)...');
   for (let i = 0; i < laptopProducts.length; i++) {
     const product = laptopProducts[i];
     const originalPrice = product.price / (1 - product.discount / 100);
@@ -666,7 +666,7 @@ async function main() {
   }
 
   // Seed TVs
-  console.log('📺 Seeding TVs (' + tvProducts.length + ' products)...');
+  console.log('Seeding TVs (' + tvProducts.length + ' products)...');
   for (let i = 0; i < tvProducts.length; i++) {
     const product = tvProducts[i];
     const originalPrice = product.price / (1 - product.discount / 100);
@@ -694,7 +694,7 @@ async function main() {
   }
 
   // Seed headphones
-  console.log('🎧 Seeding headphones (' + headphoneProducts.length + ' products)...');
+  console.log('Seeding headphones (' + headphoneProducts.length + ' products)...');
   for (let i = 0; i < headphoneProducts.length; i++) {
     const product = headphoneProducts[i];
     const originalPrice = product.price / (1 - product.discount / 100);
@@ -722,7 +722,7 @@ async function main() {
   }
 
   // Seed watches
-  console.log('⌚ Seeding watches (' + watchProducts.length + ' products)...');
+  console.log('Seeding watches (' + watchProducts.length + ' products)...');
   for (let i = 0; i < watchProducts.length; i++) {
     const product = watchProducts[i];
     const originalPrice = product.price / (1 - product.discount / 100);
@@ -750,7 +750,7 @@ async function main() {
   }
 
   // Seed cameras
-  console.log('📷 Seeding cameras (' + cameraProducts.length + ' products)...');
+  console.log('Seeding cameras (' + cameraProducts.length + ' products)...');
   for (let i = 0; i < cameraProducts.length; i++) {
     const product = cameraProducts[i];
     const originalPrice = product.price / (1 - product.discount / 100);
@@ -778,7 +778,7 @@ async function main() {
   }
 
   // Seed gaming products
-  console.log('🎮 Seeding gaming products (' + gamingProducts.length + ' products)...');
+  console.log('Seeding gaming products (' + gamingProducts.length + ' products)...');
   for (let i = 0; i < gamingProducts.length; i++) {
     const product = gamingProducts[i];
     const originalPrice = product.price / (1 - product.discount / 100);
@@ -806,7 +806,7 @@ async function main() {
   }
 
   // Seed tablets
-  console.log('📱 Seeding tablets (' + tabletProducts.length + ' products)...');
+  console.log('Seeding tablets (' + tabletProducts.length + ' products)...');
   for (let i = 0; i < tabletProducts.length; i++) {
     const product = tabletProducts[i];
     const originalPrice = product.price / (1 - product.discount / 100);
@@ -837,17 +837,17 @@ async function main() {
     headphoneProducts.length + watchProducts.length + cameraProducts.length +
     gamingProducts.length + tabletProducts.length;
 
-  console.log(`\n✅ Successfully seeded ${totalProducts} products!`);
-  console.log('\n📊 Product Breakdown:');
-  console.log(`  📱 Phones: ${phoneProducts.length}`);
-  console.log(`  💻 Laptops: ${laptopProducts.length}`);
-  console.log(`  📺 TVs: ${tvProducts.length}`);
-  console.log(`  🎧 Headphones: ${headphoneProducts.length}`);
-  console.log(`  ⌚ Watches: ${watchProducts.length}`);
-  console.log(`  📷 Cameras: ${cameraProducts.length}`);
-  console.log(`  🎮 Gaming: ${gamingProducts.length}`);
-  console.log(`  📱 Tablets: ${tabletProducts.length}`);
-  console.log(`\n🎉 Total: ${totalProducts} products with category-specific images!`);
+  console.log(`\nSuccessfully seeded ${totalProducts} products!`);
+  console.log('\nProduct Breakdown:');
+  console.log(`  Phones: ${phoneProducts.length}`);
+  console.log(`  Laptops: ${laptopProducts.length}`);
+  console.log(`  TVs: ${tvProducts.length}`);
+  console.log(`  Headphones: ${headphoneProducts.length}`);
+  console.log(`  Watches: ${watchProducts.length}`);
+  console.log(`  Cameras: ${cameraProducts.length}`);
+  console.log(`  Gaming: ${gamingProducts.length}`);
+  console.log(`  Tablets: ${tabletProducts.length}`);
+  console.log(`\nTotal: ${totalProducts} products with category-specific images!`);
 }
 
 main()
