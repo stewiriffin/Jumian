@@ -5,6 +5,43 @@ import { TrendingUp, Zap, Shield, Truck } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { safeJsonParse } from '@/lib/json-helpers';
 import { getCached, CACHE_KEYS, CACHE_TTL } from '@/lib/cache';
+import { logError } from '@/lib/logger';
+
+// JSON-LD Schema for Organization
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Jumian',
+  url: 'https://jumian.com',
+  logo: 'https://jumian.com/logo.png',
+  sameAs: [
+    'https://facebook.com/jumian',
+    'https://twitter.com/jumian',
+    'https://instagram.com/jumian',
+  ],
+  contactPoint: {
+    '@type': 'ContactPoint',
+    telephone: '+254-700-000000',
+    contactType: 'customer service',
+    availableLanguage: 'English',
+  },
+};
+
+// JSON-LD Schema for WebSite
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Jumian',
+  url: 'https://jumian.com',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: 'https://jumian.com/search?q={search_term_string}',
+    },
+    'query-input': 'required name=search_term_string',
+  },
+};
 
 async function getHomePageData() {
   return getCached(
@@ -70,7 +107,7 @@ async function getHomePageData() {
 
         return {
           categories,
-          featuredProducts: featuredProducts.map(p => {
+          featuredProducts: featuredProducts.map((p: any) => {
             const parsedImages = safeJsonParse<string[]>(p.images, []);
             return {
               ...p,
@@ -82,7 +119,7 @@ async function getHomePageData() {
               discount: p.discount ?? undefined,
             };
           }),
-          flashSaleProducts: flashSaleProducts.map(p => {
+          flashSaleProducts: flashSaleProducts.map((p: any) => {
             const parsedImages = safeJsonParse<string[]>(p.images, []);
             return {
               ...p,
@@ -96,6 +133,7 @@ async function getHomePageData() {
           }),
         };
       } catch (error) {
+        logError('Failed to fetch homepage data', error as Error);
         return { categories: [], featuredProducts: [], flashSaleProducts: [] };
       }
     },
@@ -109,7 +147,41 @@ export const revalidate = 300;
 export default async function Home() {
   const { categories, featuredProducts, flashSaleProducts } = await getHomePageData();
 
+  // Product Listing Schema
+  const productListSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: featuredProducts.map((product: any, index: number) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: {
+        '@type': 'Product',
+        name: product.name,
+        description: product.description,
+        image: product.image,
+        url: `https://jumian.com/product/${product.id}`,
+        offers: {
+          '@type': 'Offer',
+          price: product.price,
+          priceCurrency: 'KES',
+          availability: product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        },
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: product.rating,
+          reviewCount: product.reviews,
+        },
+      },
+    })),
+  };
+
   return (
+    <>
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([organizationSchema, websiteSchema, productListSchema]) }}
+      />
     <div className="container mx-auto px-4 py-6">
       {/* Hero Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -187,7 +259,7 @@ export default async function Home() {
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-6">Shop by Category</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-          {categories.map((category) => (
+          {categories.map((category: any) => (
             <Link
               key={category.id}
               href={`/category/${category.slug}`}
@@ -215,7 +287,7 @@ export default async function Home() {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {flashSaleProducts.map((product) => (
+            {flashSaleProducts.map((product: any) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
@@ -231,7 +303,7 @@ export default async function Home() {
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {featuredProducts.map((product) => (
+          {featuredProducts.map((product: any) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
@@ -259,5 +331,6 @@ export default async function Home() {
         </div>
       </div>
     </div>
+    </>
   );
 }

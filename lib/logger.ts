@@ -1,76 +1,96 @@
-import winston from 'winston'
-import { env } from './env'
+import { env } from './env';
 
+// Simple client-side logger that doesn't use fs
 const levels = {
   error: 0,
   warn: 1,
   info: 2,
-  http: 3,
   debug: 4,
-}
+};
 
 const level = () => {
-  const isDevelopment = env.NODE_ENV === 'development'
-  return isDevelopment ? 'debug' : 'info'
+  const isDevelopment = env.NODE_ENV === 'development';
+  return isDevelopment ? 'debug' : 'info';
+};
+
+type LogMessage = string;
+type LogMeta = Record<string, unknown>;
+
+interface LogErrorOptions {
+  error?: string;
+  stack?: string;
+  [key: string]: unknown;
 }
 
-const colors = {
-  error: 'red',
-  warn: 'yellow',
-  info: 'green',
-  http: 'magenta',
-  debug: 'white',
+class SimpleLogger {
+  private _level: string;
+
+  constructor() {
+    this._level = level();
+  }
+
+  private formatMessage(level: string, message: string, meta?: LogMeta): string {
+    const timestamp = new Date().toISOString();
+    const metaStr = meta ? ` ${JSON.stringify(meta)}` : '';
+    return `${timestamp} [${level}] ${message}${metaStr}`;
+  }
+
+  error(message: LogMessage, meta?: LogMeta): void;
+  error(message: LogMessage, error?: Error, meta?: LogMeta): void;
+  error(message: LogMessage, errorOrMeta?: Error | LogMeta, meta?: LogMeta): void {
+    if (levels.error > levels[this._level as keyof typeof levels]) return;
+    
+    let logMeta: LogMeta = {};
+    if (errorOrMeta instanceof Error) {
+      logMeta = { error: errorOrMeta.message, stack: errorOrMeta.stack, ...meta };
+    } else {
+      logMeta = errorOrMeta || {};
+    }
+    console.error(this.formatMessage('ERROR', message, logMeta));
+  }
+
+  warn(message: LogMessage, meta?: LogMeta): void {
+    if (levels.warn > levels[this._level as keyof typeof levels]) return;
+    console.warn(this.formatMessage('WARN', message, meta));
+  }
+
+  info(message: LogMessage, meta?: LogMeta): void {
+    if (levels.info > levels[this._level as keyof typeof levels]) return;
+    console.log(this.formatMessage('INFO', message, meta));
+  }
+
+  http(message: LogMessage, meta?: LogMeta): void {
+    console.log(this.formatMessage('HTTP', message, meta));
+  }
+
+  debug(message: LogMessage, meta?: LogMeta): void {
+    if (levels.debug > levels[this._level as keyof typeof levels]) return;
+    console.debug(this.formatMessage('DEBUG', message, meta));
+  }
 }
 
-winston.addColors(colors)
+// Export a singleton logger for client-side use
+const logger = new SimpleLogger();
 
-const format = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
-  winston.format.colorize({ all: true }),
-  winston.format.printf(
-    (info) => `${info.timestamp} ${info.level}: ${info.message}${info.stack ? `\n${info.stack}` : ''}`
-  )
-)
-
-const transports = [
-  new winston.transports.Console(),
-  new winston.transports.File({
-    filename: 'logs/error.log',
-    level: 'error',
-  }),
-  new winston.transports.File({ filename: 'logs/all.log' }),
-]
-
-const logger = winston.createLogger({
-  level: level(),
-  levels,
-  format,
-  transports,
-})
-
-export default logger
+export default logger;
 
 // Helper functions for common logging patterns
-export const logError = (message: string, error?: Error, meta?: any) => {
-  logger.error(message, {
-    error: error?.message,
-    stack: error?.stack,
-    ...meta,
-  })
-}
+export const logError = (message: string, error?: Error, meta?: Record<string, unknown>) => {
+  logger.error(message, error, meta);
+};
 
-export const logInfo = (message: string, meta?: any) => {
-  logger.info(message, meta)
-}
+export const logInfo = (message: string, meta?: Record<string, unknown>) => {
+  logger.info(message, meta);
+};
 
-export const logWarn = (message: string, meta?: any) => {
-  logger.warn(message, meta)
-}
+export const logWarn = (message: string, meta?: Record<string, unknown>) => {
+  logger.warn(message, meta);
+};
 
-export const logHttp = (message: string, meta?: any) => {
-  logger.http(message, meta)
-}
+export const logHttp = (message: string, meta?: Record<string, unknown>) => {
+  logger.http(message, meta);
+};
 
-export const logDebug = (message: string, meta?: any) => {
-  logger.debug(message, meta)
-}
+export const logDebug = (message: string, meta?: Record<string, unknown>) => {
+  logger.debug(message, meta);
+};

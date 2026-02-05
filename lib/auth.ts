@@ -37,7 +37,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role as 'user' | 'admin' | 'vendor',
+          role: user.role,
         };
       }
     })

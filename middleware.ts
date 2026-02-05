@@ -13,21 +13,18 @@ export async function middleware(request: NextRequest) {
     // Prevent MIME type sniffing
     'X-Content-Type-Options': 'nosniff',
 
-    // XSS Protection
-    'X-XSS-Protection': '1; mode=block',
-
     // Referrer Policy
     'Referrer-Policy': 'strict-origin-when-cross-origin',
 
     // Permissions Policy
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
 
-    // Content Security Policy
+    // Content Security Policy - More secure with nonces for Next.js
     'Content-Security-Policy': [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requires unsafe-eval and unsafe-inline
-      "style-src 'self' 'unsafe-inline'", // Tailwind requires unsafe-inline
-      "img-src 'self' data: https://images.unsplash.com https://plus.unsplash.com https://utfs.io https://picsum.photos",
+      "script-src 'self'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: https://images.unsplash.com https://plus.unsplash.com https://utfs.io https://picsum.photos https://placehold.co",
       "font-src 'self' data:",
       "connect-src 'self'",
       "frame-ancestors 'none'",
@@ -84,7 +81,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Rate limiting info
-  const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown'
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
   response.headers.set('X-RateLimit-IP', ip)
 
   return response

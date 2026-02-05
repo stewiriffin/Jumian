@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Product } from '@/lib/types';
@@ -13,7 +15,14 @@ export default function ProductCard({ product }: ProductCardProps) {
     <Link href={`/product/${product.id}`}>
       <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 h-full flex flex-col relative group">
         {/* Wishlist Button */}
-        <button className="absolute top-6 right-6 z-10 bg-white rounded-full p-2 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          className="absolute top-6 right-6 z-10 bg-white rounded-full p-2 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // TODO: Add to wishlist
+          }}
+        >
           <Heart size={18} className="text-gray-600 hover:text-red-500" />
         </button>
 

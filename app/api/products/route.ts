@@ -1,6 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { safeJsonParse } from '@/lib/json-helpers';
+import { logError } from '@/lib/logger';
+
+interface ParsedProduct {
+  id: string;
+  name: string;
+  slug: string | null;
+  description: string;
+  price: number;
+  originalPrice: number | null;
+  discount: number | null;
+  images: string[];
+  image: string;
+  category: string;
+  rating: number;
+  reviewCount: number;
+  inStock: boolean;
+  stock: number;
+  seller: string;
+  specifications: Record<string, string> | null;
+  featured: boolean;
+  flashSale: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 type SortByField = 'createdAt' | 'price' | 'name' | 'rating';
 const VALID_SORT_FIELDS: SortByField[] = ['createdAt', 'price', 'name', 'rating'];
@@ -24,6 +48,11 @@ export async function GET(request: NextRequest) {
       : 'createdAt';
 
     const order = (orderParam === 'asc' || orderParam === 'desc') ? orderParam : 'desc';
+
+    // Pagination parameters
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 100);
+    const skip = (page - 1) * limit;
 
     interface ProductWhere {
       categoryId?: string;
@@ -76,17 +105,22 @@ export async function GET(request: NextRequest) {
       where.inStock = true;
     }
 
-    const products = await prisma.product.findMany({
-      where,
-      include: {
-        category: true,
-      },
-      orderBy: {
-        [sortBy]: order,
-      },
-    });
+    const [products, totalCount] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        include: {
+          category: true,
+        },
+        orderBy: {
+          [sortBy]: order,
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.product.count({ where }),
+    ]);
 
-    const parsedProducts = products.map((product) => {
+    const parsedProducts: ParsedProduct[] = products.map((product: any) => {
       const parsedImages = safeJsonParse<string[]>(product.images, []);
       const parsedSpecs = product.specifications
         ? safeJsonParse<Record<string, string>>(product.specifications, {})
@@ -102,8 +136,22 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json(parsedProducts);
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalCount / limit);
+    
+    return NextResponse.json({
+      data: parsedProducts,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    });
   } catch (error) {
+    logError('Failed to fetch products', error as Error);
     return NextResponse.json(
       { error: 'Failed to fetch products' },
       { status: 500 }

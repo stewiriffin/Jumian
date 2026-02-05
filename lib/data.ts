@@ -66,7 +66,7 @@ export const products: Product[] = [
     price: 1299,
     originalPrice: 1499,
     discount: 13,
-    image: 'https://images.unsplash.com/photo-1696446702281-1comrade534c5?w=500',
+    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500',
     category: 'Electronics',
     rating: 4.8,
     reviews: 2341,
@@ -74,7 +74,7 @@ export const products: Product[] = [
     seller: 'Apple Store',
     description: 'The iPhone 15 Pro Max features a stunning titanium design, powerful A17 Pro chip, and advanced camera system.',
     images: [
-      'https://images.unsplash.com/photo-1696446702281-1comrade534c5?w=500',
+      'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500',
       'https://images.unsplash.com/photo-1592286927505-b7cae48c9ea1?w=500'
     ],
     specifications: {
