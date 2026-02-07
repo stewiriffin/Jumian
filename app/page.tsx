@@ -5,7 +5,6 @@ import { TrendingUp, Zap, Shield, Truck } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { safeJsonParse } from '@/lib/json-helpers';
 import { getCached, CACHE_KEYS, CACHE_TTL } from '@/lib/cache';
-import { logError } from '@/lib/logger';
 
 // JSON-LD Schema for Organization
 const organizationSchema = {
@@ -133,7 +132,7 @@ async function getHomePageData() {
           }),
         };
       } catch (error) {
-        logError('Failed to fetch homepage data', error as Error);
+        console.error('Failed to fetch homepage data:', error);
         return { categories: [], featuredProducts: [], flashSaleProducts: [] };
       }
     },

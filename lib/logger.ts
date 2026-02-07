@@ -1,3 +1,5 @@
+'use client';
+
 import { env } from './env';
 
 // Simple client-side logger that doesn't use fs

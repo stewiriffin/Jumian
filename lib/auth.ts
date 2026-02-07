@@ -4,9 +4,21 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from './prisma';
 import bcrypt from 'bcryptjs';
 
+// Create the adapter without type assertion
+const prismaAdapter = PrismaAdapter(prisma);
+
+// Helper function to convert Prisma role enum to NextAuth role
+function convertRoleToNextAuth(role: string): 'user' | 'admin' | 'vendor' {
+  const roleMap: Record<string, 'user' | 'admin' | 'vendor'> = {
+    'USER': 'user',
+    'ADMIN': 'admin',
+    'VENDOR': 'vendor',
+  };
+  return roleMap[role] || 'user';
+}
+
 export const authOptions: NextAuthOptions = {
-  // @ts-expect-error - Prisma Adapter type mismatch between next-auth and @auth/prisma-adapter
-  adapter: PrismaAdapter(prisma),
+  adapter: prismaAdapter as any,
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -37,7 +49,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role,
+          role: convertRoleToNextAuth(user.role as string),
         };
       }
     })
@@ -51,7 +63,7 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (session?.user && token) {
+      if (session.user && token) {
         session.user.role = token.role as 'user' | 'admin' | 'vendor';
         session.user.id = token.id as string;
       }

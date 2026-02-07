@@ -1,6 +1,5 @@
 import Redis from 'ioredis'
 import { env } from './env'
-import logger from './logger'
 
 // Initialize Redis client (only if REDIS_URL is configured)
 let redis: Redis | null = null
@@ -11,7 +10,7 @@ if (env.REDIS_URL) {
       maxRetriesPerRequest: 3,
       retryStrategy: (times) => {
         if (times > 3) {
-          logger.error('Redis connection failed after 3 retries')
+          console.error('Redis connection failed after 3 retries')
           return null
         }
         return Math.min(times * 100, 3000)
@@ -19,14 +18,14 @@ if (env.REDIS_URL) {
     })
 
     redis.on('error', (err) => {
-      logger.error('Redis error:', err)
+      console.error('Redis error:', err)
     })
 
     redis.on('connect', () => {
-      logger.info('Redis connected for caching')
+      console.info('Redis connected for caching')
     })
   } catch (error) {
-    logger.error('Failed to initialize Redis for caching:', error)
+    console.error('Failed to initialize Redis for caching:', error)
   }
 }
 
@@ -43,7 +42,7 @@ export async function getCached<T>(
 ): Promise<T> {
   // If Redis is not configured, always execute fallback
   if (!redis) {
-    logger.debug('Redis not configured, executing fallback', { key })
+    console.debug('Redis not configured, executing fallback', { key })
     return fallback()
   }
 
@@ -52,12 +51,12 @@ export async function getCached<T>(
     const cached = await redis.get(key)
 
     if (cached) {
-      logger.debug('Cache hit', { key })
+      console.debug('Cache hit', { key })
       return JSON.parse(cached) as T
     }
 
     // Cache miss - execute fallback
-    logger.debug('Cache miss', { key })
+    console.debug('Cache miss', { key })
     const data = await fallback()
 
     // Store in cache
@@ -65,7 +64,7 @@ export async function getCached<T>(
 
     return data
   } catch (error) {
-    logger.error('Cache error, falling back to direct execution', error as Error, { key })
+    console.error('Cache error, falling back to direct execution', error, { key })
     return fallback()
   }
 }
@@ -85,9 +84,9 @@ export async function setCache<T>(
 
   try {
     await redis.setex(key, ttl, JSON.stringify(value))
-    logger.debug('Cache set', { key, ttl })
+    console.debug('Cache set', { key, ttl })
   } catch (error) {
-    logger.error('Failed to set cache', error as Error, { key })
+    console.error('Failed to set cache', error, { key })
   }
 }
 
@@ -100,9 +99,9 @@ export async function deleteCache(key: string): Promise<void> {
 
   try {
     await redis.del(key)
-    logger.debug('Cache deleted', { key })
+    console.debug('Cache deleted', { key })
   } catch (error) {
-    logger.error('Failed to delete cache', error as Error, { key })
+    console.error('Failed to delete cache', error, { key })
   }
 }
 
@@ -118,12 +117,12 @@ export async function invalidateCache(pattern: string): Promise<void> {
 
     if (keys.length > 0) {
       await redis.del(...keys)
-      logger.info('Cache invalidated', { pattern, count: keys.length })
+      console.info('Cache invalidated', { pattern, count: keys.length })
     } else {
-      logger.debug('No cache keys found to invalidate', { pattern })
+      console.debug('No cache keys found to invalidate', { pattern })
     }
   } catch (error) {
-    logger.error('Cache invalidation error', error as Error, { pattern })
+    console.error('Cache invalidation error', error, { pattern })
   }
 }
 
@@ -136,9 +135,9 @@ export async function clearAllCache(): Promise<void> {
 
   try {
     await redis.flushdb()
-    logger.warn('All cache cleared')
+    console.warn('All cache cleared')
   } catch (error) {
-    logger.error('Failed to clear all cache', error as Error)
+    console.error('Failed to clear all cache', error)
   }
 }
 
@@ -166,7 +165,7 @@ export async function getCacheStats(): Promise<{
       memoryUsage,
     }
   } catch (error) {
-    logger.error('Failed to get cache stats', error as Error)
+    console.error('Failed to get cache stats', error)
     return { connected: false }
   }
 }
@@ -177,7 +176,7 @@ export async function getCacheStats(): Promise<{
 export async function disconnectCache(): Promise<void> {
   if (redis) {
     await redis.quit()
-    logger.info('Redis cache disconnected')
+    console.info('Redis cache disconnected')
   }
 }
 

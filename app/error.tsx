@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
-import { logError } from '@/lib/logger';
 
 export default function Error({
   error,
@@ -13,12 +12,8 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log to our internal logger
-    logError('Application error occurred', error as Error, {
-      digest: error.digest,
-      message: error.message,
-      stack: error.stack,
-    });
+    // Log to console
+    console.error('Application error occurred', error);
   }, [error]);
 
   return (
